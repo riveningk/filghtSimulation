@@ -4,21 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>3D Free-Flight Airplane</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <div id="info">
     Use arrow keys: ↑ pitch down, ↓ pitch up, ← roll left, → roll right
   </div>
 
-  <!-- 최신 Three.js (ES Module 방식) -->
+  <!-- ✅ 최신 Three.js를 CDN에서 직접 가져오기 -->
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js';
-    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/controls/OrbitControls.js';
-    
-    // 이제 기존 script.js의 코드를 이 안에 그대로 넣으면 됩니다.
+
+    // script.js 모듈을 불러오면서 THREE를 넘겨줍니다.
     import { initGame } from './script.js';
-    initGame(THREE, OrbitControls);
+    initGame(THREE);
   </script>
 </body>
 </html>
