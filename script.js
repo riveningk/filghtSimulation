@@ -1,82 +1,95 @@
-export function initGame(THREE) {
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js';
 
-// script.js
-// 간단한 3D 자유 비행 비행기 시뮬레이션
-
-
-// 기본 설정
+// === 기본 설정 ===
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x87CEFA, 0.0006); // 하늘색 안개로 먼 거리 페이드
+scene.background = new THREE.Color(0x87ceeb); // bright sky blue
 
-
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+// === 조명 ===
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5, 10, 7.5);
+scene.add(light);
 
-// 카메라 (3인칭)
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
-camera.position.set(0, 5, 12);
-
-
-// 조명
-const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-hemi.position.set(0, 200, 0);
-scene.add(hemi);
-
-
-const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-dir.position.set(-10, 20, 10);
-scene.add(dir);
-
-
-// 땅
-const groundGeo = new THREE.PlaneGeometry(20000, 20000);
-const groundMat = new THREE.MeshLambertMaterial({ color: 0x3cb043 }); // 초록
-const ground = new THREE.Mesh(groundGeo, groundMat);
+// === 바닥 (초록 평면) ===
+const groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x228b22 });
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2;
-ground.position.y = -2;
 scene.add(ground);
 
-
-// 간단한 구름 생성 함수
-function makeCloud(x, y, z, scale = 1) {
-const g = new THREE.Group();
-const sphereGeo = new THREE.SphereGeometry(1 * scale, 8, 6);
-const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-const a = new THREE.Mesh(sphereGeo, mat);
-const b = new THREE.Mesh(sphereGeo, mat);
-const c = new THREE.Mesh(sphereGeo, mat);
-a.position.set(0, 0, 0);
-b.position.set(1.1 * scale, 0.2 * scale, -0.2 * scale);
-c.position.set(-1.0 * scale, 0.1 * scale, 0.1 * scale);
-a.scale.set(1.0, 0.7, 0.9);
-b.scale.set(0.9, 0.6, 0.8);
-c.scale.set(0.8, 0.5, 0.7);
-g.add(a, b, c);
-g.position.set(x, y, z);
-g.rotation.y = Math.random() * Math.PI * 2;
-scene.add(g);
-return g;
+// === 구름 ===
+const cloudMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+for (let i = 0; i < 10; i++) {
+  const cloudGeo = new THREE.SphereGeometry(5 + Math.random() * 5, 8, 8);
+  const cloud = new THREE.Mesh(cloudGeo, cloudMaterial);
+  cloud.position.set(
+    Math.random() * 400 - 200,
+    20 + Math.random() * 40,
+    Math.random() * 400 - 200
+  );
+  scene.add(cloud);
 }
 
+// === 비행기 (간단한 로우폴리 스타일) ===
+const airplane = new THREE.Group();
 
-// 몇 개의 구름 흩뿌리기
-const clouds = [];
-for (let i = 0; i < 30; i++) {
-const x = (Math.random() - 0.5) * 1000;
-const y = 20 + Math.random() * 50;
-const z = (Math.random() - 0.5) * 1000 - 200;
-clouds.push(makeCloud(x, y, z, 2 + Math.random() * 3));
+// 몸체
+const bodyGeometry = new THREE.BoxGeometry(2, 1, 6);
+const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+airplane.add(body);
+
+// 날개
+const wingGeometry = new THREE.BoxGeometry(8, 0.2, 2);
+const wingMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00 });
+const wing = new THREE.Mesh(wingGeometry, wingMaterial);
+wing.position.y = 0;
+wing.position.z = 0;
+airplane.add(wing);
+
+scene.add(airplane);
+
+// === 카메라 ===
+camera.position.set(0, 3, 10);
+
+// === 키보드 제어 ===
+const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+window.addEventListener('keydown', (e) => (keys[e.code] = true));
+window.addEventListener('keyup', (e) => (keys[e.code] = false));
+
+// === 애니메이션 ===
+let velocity = 0.2;
+function animate() {
+  requestAnimationFrame(animate);
+
+  // 조작
+  if (keys.ArrowUp) airplane.rotation.x -= 0.02;
+  if (keys.ArrowDown) airplane.rotation.x += 0.02;
+  if (keys.ArrowLeft) airplane.rotation.z += 0.02;
+  if (keys.ArrowRight) airplane.rotation.z -= 0.02;
+
+  // 전진 이동
+  const forward = new THREE.Vector3(0, 0, -1);
+  forward.applyQuaternion(airplane.quaternion);
+  airplane.position.addScaledVector(forward, velocity);
+
+  // 카메라 따라가기
+  const camOffset = new THREE.Vector3(0, 3, 10).applyQuaternion(airplane.quaternion);
+  camera.position.copy(airplane.position).add(camOffset);
+  camera.lookAt(airplane.position);
+
+  renderer.render(scene, camera);
 }
 
-
-// 플레이어 비행기 (저폴리 만화풍)
-function makePlane() {
-const plane = new THREE.Group();
-
-
-// 동체
 animate();
 
-}
+// === 리사이즈 대응 ===
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
