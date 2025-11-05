@@ -1,4 +1,4 @@
-export function initGame(THREE, OrbitControls) {
+export function initGame(THREE) {
 
 // script.js
 // 간단한 3D 자유 비행 비행기 시뮬레이션
@@ -78,4 +78,5 @@ const plane = new THREE.Group();
 
 // 동체
 animate();
+
 }
