@@ -11,13 +11,7 @@
     Use arrow keys: ↑ pitch down, ↓ pitch up, ← roll left, → roll right
   </div>
 
-  <!-- ✅ 최신 Three.js를 CDN에서 직접 가져오기 -->
-  <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js';
-
-    // script.js 모듈을 불러오면서 THREE를 넘겨줍니다.
-    import { initGame } from './script.js';
-    initGame(THREE);
-  </script>
+  <!-- ✅ Three.js를 CDN에서 모듈로 불러오기 -->
+  <script type="module" src="./script.js"></script>
 </body>
 </html>
